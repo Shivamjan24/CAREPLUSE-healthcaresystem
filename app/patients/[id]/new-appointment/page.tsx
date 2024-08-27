@@ -18,7 +18,7 @@ const appointment = async ({ params: { id } }: SearchParamProps) => {
                     />
 
 
-                    <Appointmentform type="create" patientid={patient.$id} userid={id} />
+                    <Appointmentform type="create" patientid={patient?.$id} userid={id} />
                     <div className="text-14-regular mt-20 flex justify-between">
                         <p className="justify-items-end text-dark-600 xl:text-left">
                             © 2024 CarePluse

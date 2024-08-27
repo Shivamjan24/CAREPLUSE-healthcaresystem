@@ -1,9 +1,13 @@
 import Image from "next/image";
 import { Patientform } from "@/components/forms/Patientform";
+import Link from "next/link";
+import Accessadminkey from "@/components/ui/Accessadminkey";
 
-export default function Home() {
+export default function Home({ searchParams }: SearchParamProps) {
+  const isadmin = searchParams?.admin === "true";
   return (
     <div className="flex h-screen max-h-screen">
+      {isadmin && <Accessadminkey />}
       <section className="remove-scrollbar container my-auto">
         <div className="sub-container max-w-[496px]">
           <Image
@@ -20,6 +24,9 @@ export default function Home() {
             <p className="justify-items-end text-dark-600 xl:text-left">
               © 2024 CarePluse
             </p>
+            <Link href="/?admin=true" className="text-green-500">
+              Admin
+            </Link>
           </div>
         </div>
       </section>

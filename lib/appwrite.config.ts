@@ -9,6 +9,7 @@ export const {
     DOCTOR_COLLECTION_ID,
     APPOINTMENT_COLLECTION_ID,
     STORAGE_BUCKET,
+    NEXT_PUBLIC_ADMIN_PASSKEY
 } = process.env;
 
 const client = new sdk.Client();

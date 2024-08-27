@@ -19,6 +19,7 @@ import { Formfieldtypes } from "./Patientform"
 import { Doctors } from "@/constants"
 import { SelectItem } from "../ui/select"
 import Image from "next/image"
+import { createAppointment } from "@/lib/actions/appointment.actions"
 
 
 
@@ -30,15 +31,41 @@ export function Appointmentform({ type = "create", patientid, userid }: {
     // ...
     const [isloading, setisloading] = useState(false);
     const router = useRouter();
-
-
     const schema = getAppointmentSchema(type);
+    console.log(patientid)
+
     const onSubmit = async (values: z.infer<typeof schema>) => {
-
+        let status: Status;
+        console.log("i am here")
+        switch (type) {
+            case "create":
+                status = "pending";
+                break;
+            case "cancel":
+                status = "cancelled";
+                break;
+            default:
+                status = "scheduled";
+        }
         try {
-            setisloading(true);
+            if (type === "create") {
+                const appointment: CreateAppointmentParams = {
+                    userId: userid,
+                    patient: patientid,
+                    status: status,
+                    primaryPhysician: values.primaryPhysician,
+                    reason: values.reason!,
+                    note: values.note,
+                    schedule: values.schedule
+                }
+                const response = await createAppointment(appointment);
+                if (response) {
+                    form.reset()
+                    console.log(response)
+                    router.push(`/patients/${userid}/new-appointment/success?appointmentId=${response.$id}`)
+                }
+            }
 
-            setisloading(false);
         }
         catch (error) {
             console.log(error)
@@ -81,14 +108,14 @@ export function Appointmentform({ type = "create", patientid, userid }: {
                         </div>
                         <div className="flex sm:flex-row flex-col gap-2 mb-4">
                             <div className="sm:w-1/2">
-                                <Customformfield control={form.control} name="allergies" label="Reason for aapointment" fieldtype={Formfieldtypes.TEXTAREA} placeholder="ex:Monthly checkup" />
+                                <Customformfield control={form.control} name="reason" label="Reason for aapointment" fieldtype={Formfieldtypes.TEXTAREA} placeholder="ex:Monthly checkup" />
                             </div>
                             <div className="sm:w-1/2">
-                                <Customformfield control={form.control} name="currentMedication" label="Additional comments or notes" fieldtype={Formfieldtypes.TEXTAREA} placeholder="ex:Prefer morning appointments, if possible" />
+                                <Customformfield control={form.control} name="note" label="Additional comments or notes" fieldtype={Formfieldtypes.TEXTAREA} placeholder="ex:Prefer morning appointments, if possible" />
                             </div>
                         </div>
                         <div className="flex md:flex-row flex-col gap-2 mb-4">
-                            <Customformfield control={form.control} name="birthDate" showTimeSelect label="Expected appointment date" dateFormat="dd/MM/yyyy - h:mm aa" fieldtype={Formfieldtypes.DATE_PICKER} placeholder="Select your appointment date" iconSrc="/assets/icons/calendar.svg" iconAlt="Calendar" />
+                            <Customformfield control={form.control} name="schedule" showTimeSelect label="Expected appointment date" dateFormat="dd/MM/yyyy - h:mm aa" fieldtype={Formfieldtypes.DATE_PICKER} placeholder="Select your appointment date" iconSrc="/assets/icons/calendar.svg" iconAlt="Calendar" />
                         </div>
                     </div>
                 }
