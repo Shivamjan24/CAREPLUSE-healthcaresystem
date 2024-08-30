@@ -15,6 +15,7 @@ import {
 import { parseStringify } from "./utils";
 import { IdentificationTypes } from "@/constants";
 import { InputFile } from 'node-appwrite/file'
+import { revalidatePath } from "next/cache";
 
 // CREATE APPWRITE USER
 export const createUser = async (user: CreateUserParams) => {
@@ -26,17 +27,25 @@ export const createUser = async (user: CreateUserParams) => {
             undefined,
             user.name
         );
-        console.log(newuser)
-        return parseStringify(newuser);
+        const userr = {
+            ...newuser,
+            type: "new"
+        }
+        return parseStringify(userr);
 
     } catch (error: any) {
         // Check existing user
         if (error && error?.code === 409) {
             const existingUser = await users.list([
                 Query.equal("email", [user.email]),
-            ]);
 
-            return existingUser.users[0];
+            ]);
+            const userr = {
+                ...existingUser.users[0],
+                type: "existing"
+            }
+
+            return parseStringify(userr);
         }
         console.error("An error occurred while creating a new user:", error);
     }

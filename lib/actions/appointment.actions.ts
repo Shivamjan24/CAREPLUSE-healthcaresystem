@@ -12,8 +12,9 @@ import {
     ENDPOINT,
     PROJECT_ID,
     APPOINTMENT_COLLECTION_ID,
+    messaging,
 } from "../appwrite.config";
-import { parseStringify } from "./utils";
+import { formatDateTime, parseStringify } from "./utils";
 import { Appointment } from "@/types/appwrite.types";
 
 
@@ -51,7 +52,8 @@ export const getRecentAppointmentList = async () => {
         const appointmentlist = await databases.listDocuments(
             DATABASE_ID!,
             APPOINTMENT_COLLECTION_ID!,
-            [Query.orderDesc("$createdAt")]
+            [Query.orderDesc("$createdAt")],
+
         );
         const initialvalues = {
             scheduled: 0,
@@ -87,5 +89,50 @@ export const getRecentAppointmentList = async () => {
     }
     catch (error) {
         console.error("An error occurred while retrieving appointments:", error);
+    }
+}
+
+export const Updateappointment = async ({ appointmentid, appointment }: UpdateAppointmentParams) => {
+    try {
+        const updated = await databases.updateDocument(
+            DATABASE_ID!,
+            APPOINTMENT_COLLECTION_ID!,
+            appointmentid,
+            appointment
+        );
+        return parseStringify(updated);
+
+    }
+    catch (error) {
+        console.error("An error occurred while updating appointment:", error);
+    }
+}
+export const sendsms = async (appointment: Appointment, type: "create" | "schedule" | "cancel") => {
+    try {
+        const result = await messaging.createSms(
+            ID.unique(), // messageId
+            `Greetings from CarePulse. ${type === "schedule" ? `Your appointment is confirmed for ${formatDateTime(appointment.schedule!).dateTime} with Dr. ${appointment.primaryPhysician}` : `We regret to inform that your appointment for ${formatDateTime(appointment.schedule!).dateTime} is cancelled. Reason:  ${appointment.cancellationReason}`}.`, // content
+            [],
+            [appointment.userId]
+        );
+        return parseStringify(result);
+    }
+    catch (error) {
+        console.error("An error occurred while sending sms:", error);
+    }
+}
+
+export const sendsmspending = async (appointment: Appointment) => {
+    try {
+        const result = await messaging.createSms(
+            ID.unique(), // messageId
+            `Greetings from CarePulse. Your appointment has been requested for ${formatDateTime(appointment.schedule!).dateTime} with Dr. ${appointment.primaryPhysician}.`, // content
+            [],
+            [appointment.userId]
+        );
+        return parseStringify(result);
+    }
+    catch (error) {
+        console.error("An error occurred while sending sms:", error);
     }
 }

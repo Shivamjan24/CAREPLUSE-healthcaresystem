@@ -1,12 +1,16 @@
+
 import { columns } from "@/components/ui/columns";
 import Counter from "@/components/ui/Counter";
 import { DataTable } from "@/components/ui/data-table";
 import { getRecentAppointmentList } from "@/lib/actions/appointment.actions";
 import Image from "next/image";
+import { cache } from "react";
+
+export const revalidate = 0;
 
 const admin = async () => {
-    const data = await getRecentAppointmentList()
-    console.log(data);
+
+    const data = await getRecentAppointmentList();
     return (
         <div className="h-screen max-h-screen">
             <div className="flex justify-between bg-black px-6 py-4 m-2 rounded-lg items-center">
@@ -35,7 +39,7 @@ const admin = async () => {
 
                 </div>
                 <div className="mt-12">
-                    <DataTable columns={columns} data={data} />
+                    <DataTable columns={columns} data={data.listt} />
                 </div>
             </div>
         </div>

@@ -13,20 +13,25 @@ import { Customformfield } from "@/components/ui/Customformfield"
 import { getAppointmentSchema, userformvalidation } from "@/lib/userformvalidation"
 
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { Dispatch, SetStateAction, useState } from "react"
 import { createUser } from "@/lib/actions/patient.actions"
 import { Formfieldtypes } from "./Patientform"
 import { Doctors } from "@/constants"
 import { SelectItem } from "../ui/select"
 import Image from "next/image"
-import { createAppointment } from "@/lib/actions/appointment.actions"
+import { createAppointment, sendsms, sendsmspending, Updateappointment } from "@/lib/actions/appointment.actions"
+import { Appointment } from "@/types/appwrite.types"
+import { revalidatePath } from "next/cache"
+import toast from "react-hot-toast"
 
 
 
-export function Appointmentform({ type = "create", patientid, userid }: {
+export function Appointmentform({ type, patientid, userid, appointment, setOpen }: {
     type: "create" | "schedule" | "cancel",
     patientid: string,
-    userid: string
+    userid: string,
+    appointment?: Appointment,
+    setOpen?: Dispatch<SetStateAction<boolean>>
 }) {
     // ...
     const [isloading, setisloading] = useState(false);
@@ -34,8 +39,20 @@ export function Appointmentform({ type = "create", patientid, userid }: {
     const schema = getAppointmentSchema(type);
     console.log(patientid)
 
+    const form = useForm<z.infer<typeof schema>>({
+        resolver: zodResolver(schema),
+        defaultValues: {
+            primaryPhysician: appointment ? appointment.primaryPhysician : "",
+            schedule: appointment ? new Date(appointment.schedule) : new Date(Date.now()),
+            reason: appointment ? appointment.reason : "",
+            note: appointment ? appointment.note : "",
+            cancellationReason: ""
+        }
+    })
+
     const onSubmit = async (values: z.infer<typeof schema>) => {
         let status: Status;
+        let load;
         console.log("i am here")
         switch (type) {
             case "create":
@@ -48,6 +65,7 @@ export function Appointmentform({ type = "create", patientid, userid }: {
                 status = "scheduled";
         }
         try {
+            load = toast.loading("Request in process")
             if (type === "create") {
                 const appointment: CreateAppointmentParams = {
                     userId: userid,
@@ -56,39 +74,65 @@ export function Appointmentform({ type = "create", patientid, userid }: {
                     primaryPhysician: values.primaryPhysician,
                     reason: values.reason!,
                     note: values.note,
-                    schedule: values.schedule
+                    schedule: values.schedule,
                 }
                 const response = await createAppointment(appointment);
                 if (response) {
                     form.reset()
+                    toast.dismiss(load)
+                    toast.success("new appointment created successfully")
+                    const result = await sendsmspending(response);
                     console.log(response)
                     router.push(`/patients/${userid}/new-appointment/success?appointmentId=${response.$id}`)
                 }
-            }
 
+            }
+            else {
+                const appointmenttoupdate: UpdateAppointmentParams = {
+                    appointmentid: appointment!.$id,
+                    appointment: {
+                        status: status,
+                        primaryPhysician: values.primaryPhysician,
+                        reason: values.reason,
+                        schedule: new Date(values.schedule),
+                        cancellationReason: values.cancellationReason
+                    }
+                }
+                const updated = await Updateappointment(appointmenttoupdate);
+                if (updated) {
+                    updated.status === "cancelled" ? toast.success("appointment cancelled successfully") : toast.success("appointment scheduled successfully");
+                    const response = await sendsms(updated, type);
+                    setOpen && setOpen(false);
+                    form.reset();
+                    toast.dismiss(load)
+                }
+            }
         }
         catch (error) {
             console.log(error)
+            toast.dismiss(load)
         }
     }
-    const form = useForm<z.infer<typeof schema>>({
-        resolver: zodResolver(schema),
-        defaultValues: {
-            primaryPhysician: "",
-            schedule: new Date(),
-            reason: "",
-            note: "",
-            cancellationReason: "",
-        }
-    })
+
+    let label: string;
+    switch (type) {
+        case "create":
+            label = "Create New Appointment";
+            break;
+        case "schedule":
+            label = "Schedule New Appointment";
+            break;
+        case "cancel":
+            label = "Cancel Existing Appointment";
+    }
     return (
         <Form {...form}>
 
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <section className="mb-12 space-y-4">
+                {type === "create" && <section className="mb-12 space-y-4">
                     <h1 className="header">Hey there 👋</h1>
                     <p className="text-dark-700">Request a new appointment in 10 seconds.</p>
-                </section>
+                </section>}
                 {type !== "cancel" &&
                     <div className="w-[100%]">
                         <div className="flex md:flex-row flex-col gap-2 mb-4">
@@ -128,7 +172,7 @@ export function Appointmentform({ type = "create", patientid, userid }: {
                 }
 
                 <div className="w-[100%]">
-                    <Button type="submit" className="border-solid border-white bg-green-500 w-[100%] text-center">Submit and Continue</Button>
+                    <Button type="submit" className={type === "cancel" ? "border-solid border-white bg-red-500 w-[100%] text-center" : "border-solid border-white bg-green-500 w-[100%] text-center"}>{label}</Button>
                 </div>
             </form>
         </Form>
