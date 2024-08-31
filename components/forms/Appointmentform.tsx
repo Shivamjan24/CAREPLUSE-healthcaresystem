@@ -46,7 +46,7 @@ export function Appointmentform({ type, patientid, userid, appointment, setOpen 
             schedule: appointment ? new Date(appointment.schedule) : new Date(Date.now()),
             reason: appointment ? appointment.reason : "",
             note: appointment ? appointment.note : "",
-            cancellationReason: ""
+            cancellationReason: appointment?.cancellationReason || "",
         }
     })
 
