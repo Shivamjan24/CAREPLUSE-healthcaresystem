@@ -26,6 +26,8 @@ import { SelectGroup, SelectItem, SelectLabel } from "@/components/ui/select"
 
 import Image from "next/image"
 import FileUploader from "../ui/FileUploader"
+import toast from "react-hot-toast"
+
 const Registerform = ({ user }: { user: User }) => {
     // ...
 
@@ -33,12 +35,14 @@ const Registerform = ({ user }: { user: User }) => {
     const router = useRouter();
     const onSubmit = async (values: z.infer<typeof registerformvalidation>) => {
         let formdata = new FormData();
+        let load;
         if (values.identificationDocument && values.identificationDocument?.length > 0) {
             const blobFile = new Blob([values.identificationDocument[0]], { type: values.identificationDocument[0].type })
             formdata.append("blobFile", blobFile)
             formdata.append("fileName", values.identificationDocument[0].name)
         }
         try {
+            load = toast.loading("Registering...")
             setisloading(true);
             const patient = {
                 name: values.name,
@@ -67,11 +71,15 @@ const Registerform = ({ user }: { user: User }) => {
             }
             const newPatient = await registerPatient(patient);
             if (newPatient) {
+                toast.dismiss(load);
+                toast.success("Registered user successfully")
                 router.push(`/patients/${user.$id}/new-appointment`);
             }
             setisloading(false);
         }
         catch (error) {
+            toast.dismiss(load);
+            toast.error("Unable to register user")
             console.log(error)
         }
     }

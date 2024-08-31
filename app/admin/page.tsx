@@ -4,6 +4,7 @@ import Counter from "@/components/ui/Counter";
 import { DataTable } from "@/components/ui/data-table";
 import { getRecentAppointmentList } from "@/lib/actions/appointment.actions";
 import Image from "next/image";
+import Link from "next/link";
 import { cache } from "react";
 
 export const revalidate = 0;
@@ -15,13 +16,15 @@ const admin = async () => {
         <div className="h-screen max-h-screen">
             <div className="flex justify-between bg-black px-6 py-4 m-2 rounded-lg items-center">
                 <div>
-                    <Image
-                        src="/assets/icons/logo-full.svg"
-                        height={1000}
-                        width={1000}
-                        alt="patient"
-                        className="h-10 w-fit"
-                    />
+                    <Link href="/">
+                        <Image
+                            src="/assets/icons/logo-full.svg"
+                            height={1000}
+                            width={1000}
+                            alt="patient"
+                            className="h-10 w-fit"
+                        />
+                    </Link>
                 </div>
                 <div>
                     <p className="text-lg font-semibold">Admin</p>

@@ -100,11 +100,11 @@ export function Appointmentform({ type, patientid, userid, appointment, setOpen 
                 }
                 const updated = await Updateappointment(appointmenttoupdate);
                 if (updated) {
+                    toast.dismiss(load)
                     updated.status === "cancelled" ? toast.success("appointment cancelled successfully") : toast.success("appointment scheduled successfully");
                     const response = await sendsms(updated, type);
                     setOpen && setOpen(false);
                     form.reset();
-                    toast.dismiss(load)
                 }
             }
         }
