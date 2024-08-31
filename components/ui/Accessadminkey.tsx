@@ -40,7 +40,7 @@ const Accessadminkey = () => {
             ? window.localStorage.getItem("adminkey")
             : null;
 
-    useEffect(() => {
+    const fun = () => {
         const accesskey = encryptedKey && decryptKey(encryptedKey)
         if (path) {
             if (accesskey === process.env.NEXT_PUBLIC_ADMIN_PASSKEY) {
@@ -51,7 +51,10 @@ const Accessadminkey = () => {
                 setOpen(true);
             }
         }
-    }, [encryptedKey])
+    }
+
+    useEffect(() => fun,
+        [encryptedKey])
 
     const closemodal = () => {
         setOpen(false);
