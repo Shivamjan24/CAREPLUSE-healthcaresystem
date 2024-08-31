@@ -51,7 +51,7 @@ const Accessadminkey = () => {
                 setOpen(true);
             }
         }
-    }, [encryptKey])
+    }, [encryptedKey])
 
     const closemodal = () => {
         setOpen(false);
